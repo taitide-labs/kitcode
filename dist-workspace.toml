@@ -21,6 +21,3 @@ tap = "taitide-labs/homebrew-tap"
 publish-jobs = ["homebrew", "npm"]
 # Whether to install an updater program
 install-updater = false
-
-[dist.github-custom-runners]
-aarch64-apple-darwin = "macos-latest"
