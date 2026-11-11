@@ -1,0 +1,20 @@
+[package]
+name = "kitcode"
+version = "0.1.0"
+edition = "2024"
+description = "KitCode Agent is an AI agent built in Rust."
+license = "MIT"
+repository = "https://github.com/taitide-labs/kitcode"
+homepage = "https://github.com/taitide-labs/kitcode"
+readme = "README.md"
+keywords = ["ai", "agent", "cli", "coding"]
+categories = ["command-line-utilities", "development-tools"]
+
+[[bin]]
+name = "kitcode"
+path = "src/main.rs"
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"

@@ -1,0 +1,28 @@
+# Operating System
+.DS_Store
+
+# Editors and IDEs
+.idea/
+.vscode/
+
+# Dependencies and Runtime Environments
+node_modules/
+.venv/
+venv/
+__pycache__/
+
+# Build Outputs and Caches
+dist/
+target/
+
+# Logs
+logs/
+*.log
+
+# Environment and Secrets
+.env
+.env*.local
+
+# Tools and Local Indexes
+.codegraph/
+.archify/
