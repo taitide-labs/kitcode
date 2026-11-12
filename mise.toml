@@ -1,8 +1,5 @@
 #:schema https://mise.jdx.dev/schema/mise.json
 
-[env]
-HK_QUIET = "1"
-
 [tools]
 hk = "2.12"
 rumdl = "0.3.3"
@@ -15,8 +12,8 @@ cargo-deny = "0.20.2"
 
 [tasks."docs:check"]
 description = "Run all documentation and spelling checks"
-run = "hk check --all -q"
+run = "hk check --all --silent -n"
 
 [tasks."docs:fix"]
 description = "Auto-fix documentation formatting and typography"
-run = "hk fix --all -q"
+run = "hk fix --all --silent -n"
