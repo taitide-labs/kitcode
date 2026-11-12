@@ -1,0 +1,58 @@
+# 贡献指南
+
+欢迎向 `kitcode` 提交代码或文档改进。本仓库使用 `mise` 管理工具链、使用 `hk` 编排本地 Git Hooks，所有变更均通过 Pull Request 合入 `main` 分支。
+
+## 1. 本地环境初始化
+
+克隆仓库后，在根目录安装项目依赖工具并激活 Git Hooks：
+
+```sh
+mise install
+hk install --mise
+```
+
+激活后，以下 Git Hooks 会自动生效：
+
+- **`pre-commit`**：运行文档规范、Mermaid 语法、离线死链、拼写检查，以及 `cargo fmt`、`cargo clippy`、`cargo test`。
+- **`commit-msg`**：校验提交信息是否符合 Conventional Commits 规范。
+- **`pre-push`**：运行 `cargo deny check` 审计依赖安全与许可证合规。
+
+## 2. 常用检查命令
+
+- 执行全量只读检查：
+
+  ```sh
+  mise run docs:check
+  ```
+
+- 自动修复排版、Markdown 格式与代码格式：
+
+  ```sh
+  mise run docs:fix
+  ```
+
+## 3. 提交规范（Conventional Commits）
+
+所有提交信息须遵循以下格式：
+
+```text
+<type>(<scope>): <简述>
+
+<变更动机（可选）>
+
+BREAKING CHANGE: <破坏性变更说明（可选）>
+```
+
+常用 `<type>` 说明：
+
+- `feat`：新增面向用户的功能（触发次版本升级）
+- `fix`：修复面向用户的缺陷（触发修订号升级）
+- `docs`：仅修改文档
+- `refactor`：代码重构（无新功能且无缺陷修复）
+- `chore` / `ci`：工程基建、依赖或 CI 流程调整
+
+## 4. Pull Request 流程
+
+1. 从 `main` 分支创建特性或修复分支（仓库规则禁止直接向 `main` 推送）。
+2. 提交前确认本地 `mise run docs:check` 全部通过。
+3. 创建 Pull Request，等待 `Merge Gate`（`Path Filter`、`Docs Checks`、`Checks`、`Security`）全部通过后即可合并。
