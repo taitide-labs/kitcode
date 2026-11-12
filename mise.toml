@@ -1,5 +1,8 @@
 #:schema https://mise.jdx.dev/schema/mise.json
 
+[env]
+HK_QUIET = "1"
+
 [tools]
 hk = "2.12"
 rumdl = "0.3.3"
