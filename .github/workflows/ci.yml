@@ -36,17 +36,17 @@ jobs:
             docs:
               - '**/*.md'
               - 'docs/**'
-              - '.rumdl.toml'
-              - '.autocorrectrc'
-              - 'lychee.toml'
+              - '.config/rumdl.toml'
+              - '.config/autocorrectrc'
+              - '.config/lychee.toml'
             code:
               - '**'
               - '!**/*.md'
               - '!docs/**'
               - '!LICENSE'
-              - '!.rumdl.toml'
-              - '!.autocorrectrc'
-              - '!lychee.toml'
+              - '!.config/rumdl.toml'
+              - '!.config/autocorrectrc'
+              - '!.config/lychee.toml'
 
   docs:
     name: Docs Checks
@@ -110,7 +110,7 @@ jobs:
       - name: Scan for leaked secrets
         run: gitleaks git --verbose --redact .
       - name: Audit dependencies with cargo-deny
-        run: mise x -- cargo deny check
+        run: mise x -- cargo deny --config .config/deny.toml check
 
   gate:
     name: Merge Gate
