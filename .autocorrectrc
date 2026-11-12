@@ -6,3 +6,4 @@ ignore:
   - "dist/**"
   - ".rumdl_cache/**"
   - "Cargo.lock"
+  - "CHANGELOG.md"
