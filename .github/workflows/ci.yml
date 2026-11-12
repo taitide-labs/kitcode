@@ -35,17 +35,18 @@ jobs:
           filters: |
             docs:
               - '**/*.md'
+              - 'docs/**'
               - '.rumdl.toml'
               - '.autocorrectrc'
               - 'lychee.toml'
             code:
-              - 'src/**'
-              - 'Cargo.toml'
-              - 'Cargo.lock'
-              - 'deny.toml'
-              - '.github/**'
-              - 'mise.toml'
-              - 'hk.pkl'
+              - '**'
+              - '!**/*.md'
+              - '!docs/**'
+              - '!LICENSE'
+              - '!.rumdl.toml'
+              - '!.autocorrectrc'
+              - '!lychee.toml'
 
   docs:
     name: Docs Checks
