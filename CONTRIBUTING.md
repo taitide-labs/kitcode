@@ -31,7 +31,9 @@ hk install --mise
   mise run docs:fix
   ```
 
-## 3. 提交规范
+## 3. 提交与版本规范
+
+本项目采用 [Conventional Commits 1.0.0](https://www.conventionalcommits.org/) 规范提交信息，并遵循 [Semantic Versioning 2.0.0](https://semver.org/) 规范管理版本号。
 
 所有提交信息须遵循以下格式：
 
