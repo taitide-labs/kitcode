@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   checks:
-    name: Docs & Rust Checks
+    name: Checks
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -33,11 +33,11 @@ jobs:
       - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
         with:
           install: true
-      - name: Run docs and Rust checks
+      - name: Run checks
         run: mise run docs:check
 
   security:
-    name: Fast Security Checks
+    name: Security
     runs-on: ubuntu-latest
     permissions:
       contents: read
