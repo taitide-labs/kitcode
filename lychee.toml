@@ -1,0 +1,9 @@
+#:schema https://json.schemastore.org/lychee.json
+
+offline = true
+exclude_path = [
+  "target",
+  "dist",
+  ".rumdl_cache",
+  "Cargo.lock",
+]

@@ -10,7 +10,9 @@ fn run(args: &[String]) -> i32 {
             0
         }
         Some("-h" | "--help") => {
-            println!("KitCode Agent {VERSION}\n\nUsage: kitcode [OPTIONS]\n\nOptions:\n  -h, --help     Print help\n  -V, --version  Print version");
+            println!(
+                "KitCode Agent {VERSION}\n\nUsage: kitcode [OPTIONS]\n\nOptions:\n  -h, --help     Print help\n  -V, --version  Print version"
+            );
             0
         }
         None => {

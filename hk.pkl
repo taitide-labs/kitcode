@@ -1,0 +1,49 @@
+amends "package://github.com/jdx/hk/releases/download/v2.12.0/hk@2.12.0#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v2.12.0/hk@2.12.0#/Builtins.pkl"
+
+steps {
+  ["autocorrect"] {
+    glob = List("*.md", "*.rs")
+    check = "autocorrect --lint {{files}}"
+    fix = "autocorrect --fix {{files}}"
+  }
+
+  ["rumdl"] {
+    glob = List("*.md")
+    check = "rumdl check {{files}}"
+    fix = "rumdl check --fix {{files}}"
+  }
+
+  ["mmdr"] {
+    glob = List("*.md")
+    check = "for f in {{files}}; do if grep -q '```mermaid' \"$f\"; then mmdr -i \"$f\" --size --fastText >/dev/null || exit 1; fi; done"
+  }
+
+  ["lychee"] {
+    glob = List("*.md")
+    check = "lychee --offline {{files}}"
+  }
+
+  ["typos"] = Builtins.typos
+  ["cargo_fmt"] = Builtins.cargo_fmt
+  ["cargo_clippy"] = Builtins.cargo_clippy
+
+  ["cargo_test"] {
+    glob = List("*.rs", "Cargo.toml", "Cargo.lock")
+    check = "cargo test --locked"
+  }
+}
+
+hooks {
+  ["commit-msg"] {
+    steps {
+      ["conventional_commit"] = Builtins.check_conventional_commit
+    }
+  }
+
+  ["pre-push"] {
+    steps {
+      ["cargo_deny"] = Builtins.cargo_deny
+    }
+  }
+}
