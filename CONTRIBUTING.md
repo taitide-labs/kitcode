@@ -31,7 +31,7 @@ hk install --mise
   mise run docs:fix
   ```
 
-## 3. 提交规范（Conventional Commits）
+## 3. 提交规范
 
 所有提交信息须遵循以下格式：
 
@@ -47,6 +47,7 @@ BREAKING CHANGE: <破坏性变更说明（可选）>
 
 - `feat`：新增面向用户的功能（触发次版本升级）
 - `fix`：修复面向用户的缺陷（触发修订号升级）
+- `feat!` / `BREAKING CHANGE:`：包含破坏性变更（`>= 1.0.0` 时触发主版本号升级）
 - `docs`：仅修改文档
 - `refactor`：代码重构（无新功能且无缺陷修复）
 - `chore` / `ci`：工程基建、依赖或 CI 流程调整
