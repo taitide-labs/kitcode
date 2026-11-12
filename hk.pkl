@@ -26,7 +26,10 @@ steps {
 
   ["typos"] = Builtins.typos
   ["cargo_fmt"] = Builtins.cargo_fmt
-  ["cargo_clippy"] = Builtins.cargo_clippy
+  ["cargo_clippy"] {
+    glob = List("**/*.rs", "Cargo.toml", "Cargo.lock")
+    check = "cargo clippy --manifest-path Cargo.toml --all-targets -- -D warnings"
+  }
 
   ["cargo_test"] {
     glob = List("*.rs", "Cargo.toml", "Cargo.lock")

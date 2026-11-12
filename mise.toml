@@ -11,8 +11,8 @@ cargo-deny = "0.20.2"
 
 [tasks."docs:check"]
 description = "Run all documentation and spelling checks"
-run = "hk check --all"
+run = "hk check --all -q"
 
 [tasks."docs:fix"]
 description = "Auto-fix documentation formatting and typography"
-run = "hk fix"
+run = "hk fix --all -q"

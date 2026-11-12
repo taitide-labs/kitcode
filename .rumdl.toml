@@ -11,7 +11,7 @@ disable = [
 ]
 
 [MD004]
-style = "dash"
+style = "dash" # 无序列表统一使用短横线 -
 
 [MD060]
-style = "compact"
+style = "compact" # 表格采用紧凑风格

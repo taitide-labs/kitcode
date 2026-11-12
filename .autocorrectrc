@@ -1,8 +1,8 @@
 textRules:
-  spellcheck: 0 # 关闭拼写检查，交由 typos 专职处理
+  spellcheck: 0 # 关闭拼写检查
 
 ignore:
-  - "target/**" # Rust 构建产物目录
-  - "dist/**" # 打包发布产物目录
-  - ".rumdl_cache/**" # rumdl 本地缓存
-  - "Cargo.lock" # 依赖锁文件
+  - "target/**"
+  - "dist/**"
+  - ".rumdl_cache/**"
+  - "Cargo.lock"

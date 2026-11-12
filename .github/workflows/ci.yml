@@ -1,0 +1,75 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches:
+      - main
+
+permissions: {}
+
+concurrency:
+  group: ci-${{ github.event.pull_request.head.sha || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Docs & Rust Checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
+        with:
+          install: true
+      - name: Run docs and Rust checks
+        run: mise run docs:check
+
+  security:
+    name: Fast Security Checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
+        with:
+          install: true
+      - name: Install Gitleaks
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download --repo gitleaks/gitleaks --pattern '*_linux_x64.tar.gz' --output - | sudo tar -xz -C /usr/local/bin gitleaks
+      - name: Scan for leaked secrets
+        run: gitleaks git --verbose --redact .
+      - name: Audit dependencies with cargo-deny
+        run: mise x -- cargo deny check
+
+  gate:
+    name: Merge Gate
+    needs: [checks, security]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify required checks
+        env:
+          CHECKS_RESULT: ${{ needs.checks.result }}
+          SECURITY_RESULT: ${{ needs.security.result }}
+        run: |
+          if [ "$CHECKS_RESULT" != "success" ] || [ "$SECURITY_RESULT" != "success" ]; then
+            exit 1
+          fi
