@@ -130,11 +130,13 @@ jobs:
           subject-path: |
             artifacts/*.tar.gz
             artifacts/*.zip
-      - name: Upload release assets
+      - name: Upload release assets and publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ needs.release-please.outputs.tag_name }}
-        run: gh release upload "$TAG" artifacts/* --clobber
+        run: |
+          gh release upload "$TAG" artifacts/* --clobber
+          gh release edit "$TAG" --draft=false
 
   publish-crates:
     needs: [release-please, upload-assets]
