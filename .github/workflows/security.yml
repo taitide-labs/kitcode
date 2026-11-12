@@ -46,7 +46,7 @@ jobs:
         with:
           install: true
       - name: Run cargo-deny
-        run: mise x -- cargo deny --config .config/deny.toml check
+        run: mise x -- cargo deny check
 
   zizmor:
     name: Workflow Security Audit

@@ -46,10 +46,7 @@ hooks {
 
   ["pre-push"] {
     steps {
-      ["cargo_deny"] {
-        glob = List("**/Cargo.toml", "**/Cargo.lock", ".config/deny.toml")
-        check = "cargo deny --config .config/deny.toml check"
-      }
+      ["cargo_deny"] = Builtins.cargo_deny
     }
   }
 }

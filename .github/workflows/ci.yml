@@ -110,7 +110,7 @@ jobs:
       - name: Scan for leaked secrets
         run: gitleaks git --verbose --redact .
       - name: Audit dependencies with cargo-deny
-        run: mise x -- cargo deny --config .config/deny.toml check
+        run: mise x -- cargo deny check
 
   gate:
     name: Merge Gate
