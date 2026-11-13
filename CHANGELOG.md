@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.11](https://github.com/taitide-labs/kitcode/compare/v0.1.10...v0.1.11) (2026-11-13)
+
+
+### Bug Fixes
+
+* **ci:** 从 Cargo.toml 动态读取二进制名称避免硬编码 ([#33](https://github.com/taitide-labs/kitcode/issues/33)) ([0d9b45c](https://github.com/taitide-labs/kitcode/commit/0d9b45c9bad9b390144e5581eee0aeb2e38ac48c))
+
 ## [0.1.10](https://github.com/taitide-labs/kitcode/compare/v0.1.9...v0.1.10) (2026-11-12)
 
 * 迁移 Release Tag 前缀（`kitcode-v*` -> `v*`），无新增功能或缺陷修复。
