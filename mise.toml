@@ -10,10 +10,10 @@ cargo-deny = "0.20.2"
 "github:huacnlee/autocorrect" = "2.16.3"
 "github:1jehuang/mermaid-rs-renderer" = "0.3.1"
 
-[tasks."docs:check"]
-description = "Run all documentation and spelling checks"
+[tasks.check]
+description = "Run all documentation, formatting, clippy, and test checks"
 run = "hk check --all --silent -n"
 
-[tasks."docs:fix"]
-description = "Auto-fix documentation formatting and typography"
+[tasks.fmt]
+description = "Auto-fix documentation formatting, typography, and Rust code formatting"
 run = "hk fix --all --silent -n"
