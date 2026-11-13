@@ -95,11 +95,15 @@ jobs:
           TARGET: ${{ matrix.target }}
           EXT: ${{ matrix.ext }}
         run: |
+          meta=$(cargo metadata --no-deps --format-version 1)
+          pkg_name=$(echo "$meta" | jq -r '.packages[0].name')
+          bin_name=$(echo "$meta" | jq -r '(.packages[0].targets[] | select(.kind | index("bin")) | .name)' | head -n 1)
+          bin_name="${bin_name:-$pkg_name}"
           mkdir -p dist
           if [ "$EXT" = "zip" ]; then
-            7z a "dist/kitcode-${TARGET}.zip" "./target/${TARGET}/release/kitcode.exe"
+            7z a "dist/${pkg_name}-${TARGET}.zip" "./target/${TARGET}/release/${bin_name}.exe"
           else
-            tar -C "target/${TARGET}/release" -czf "dist/kitcode-${TARGET}.tar.gz" kitcode
+            tar -C "target/${TARGET}/release" -czf "dist/${pkg_name}-${TARGET}.tar.gz" "$bin_name"
           fi
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -122,7 +126,7 @@ jobs:
       - name: Generate checksums
         run: |
           cd artifacts
-          sha256sum kitcode-* > SHA256SUMS.txt
+          sha256sum *.tar.gz *.zip > SHA256SUMS.txt
       - name: Attest build provenance
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
