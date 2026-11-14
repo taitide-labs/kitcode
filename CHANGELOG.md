@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.14](https://github.com/taitide-labs/kitcode/compare/v0.1.13...v0.1.14) (2026-11-14)
+
+
+### Bug Fixes
+
+* **release:** 启用 force-tag-creation 避免草稿发布重复生成 PR ([#38](https://github.com/taitide-labs/kitcode/issues/38)) ([a5b3aff](https://github.com/taitide-labs/kitcode/commit/a5b3aff3bfbb2184f8d52959b9e661e0e70cf82f))
+
 ## [0.1.13](https://github.com/taitide-labs/kitcode/compare/v0.1.12...v0.1.13) (2026-11-14)
 
 
