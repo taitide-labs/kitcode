@@ -70,6 +70,13 @@ steps {
     glob = List("**/*.rs", "Cargo.toml", "Cargo.lock")
     check = "cargo nextest run --workspace --locked --no-tests=pass --cargo-quiet --status-level=fail --final-status-level=fail --show-progress=none"
   }
+
+  ["mise_lock"] {
+    profiles = List("code")
+    glob = List("mise.toml")
+    fix = "mise lock"
+    stage = List("mise.lock")
+  }
 }
 
 hooks {
