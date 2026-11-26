@@ -1,19 +1,46 @@
 #:schema https://mise.jdx.dev/schema/mise.json
 
+[settings]
+task.quiet = true
+
 [tools]
-hk = "2.12"
-rumdl = "0.3.3"
+hk = "2.12.0"
+rumdl = "0.3.4"
 lychee = "0.24.2"
-typos = "1"
-gitleaks = "8"
-cargo-deny = "0.20.2"
+typos = "1.52.2"
+gitleaks = "8.30.1"
+zizmor = "1.32.0"
 "github:huacnlee/autocorrect" = "2.16.3"
 "github:1jehuang/mermaid-rs-renderer" = "0.3.1"
-
-[tasks.check]
-description = "Run all documentation, formatting, clippy, and test checks"
-run = "hk check --all --silent -n"
+cargo-deny = "0.20.2"
+ast-grep = "0.51.3"
+"github:nextest-rs/nextest" = { version = "0.9.152", version_prefix = "cargo-nextest-" }
 
 [tasks.fmt]
-description = "Auto-fix documentation formatting, typography, and Rust code formatting"
-run = "hk fix --all --silent -n"
+description = "Auto-fix documentation formatting, typography, and code formatting"
+run = "hk fix --all -q -n -p docs -p code -p fmt"
+
+[tasks.check]
+description = "Run all documentation, security, ast-grep, clippy, and test checks"
+run = "hk check --all -q -n"
+
+[tasks.test]
+description = "Run tests via nextest (supports -p <crate>, <filter>, or -E <expr>)"
+run = "cargo nextest run --workspace --locked --no-tests=pass --cargo-quiet --status-level=fail --final-status-level=fail --show-progress=none"
+
+[tasks.e2e]
+description = "Run end-to-end acceptance tests"
+run = "cargo nextest run --workspace --locked --no-tests=pass --cargo-quiet --status-level=fail --final-status-level=fail --show-progress=none -E 'test(/^e2e_/)'"
+
+[tasks.audit]
+description = "Audit dependencies for vulnerabilities and license compliance"
+run = "cargo deny --locked -L error check --hide-inclusion-graph"
+
+[tasks.hooks]
+description = "Install quiet hk git hooks without progress bar spam"
+run = [
+  "hk install --mise",
+  "git config hook.hk-pre-commit.command 'test \"${HK:-1}\" = \"0\" || mise x -- hk run pre-commit --from-hook -q -n'",
+  "git config hook.hk-commit-msg.command 'test \"${HK:-1}\" = \"0\" || mise x -- hk run commit-msg --from-hook -q -n'",
+  "git config hook.hk-pre-push.command 'test \"${HK:-1}\" = \"0\" || mise x -- hk run pre-push --from-hook -q -n'",
+]

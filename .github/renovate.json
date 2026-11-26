@@ -7,19 +7,13 @@
     "helpers:pinGitHubActionDigestsToSemver"
   ],
   "timezone": "Asia/Shanghai",
-  "schedule": [
-    "before 4am on Monday"
-  ],
-  "labels": [
-    "dependencies"
-  ],
+  "schedule": ["before 4am on Monday"],
+  "labels": ["dependencies"],
   "minimumReleaseAge": "7 days",
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": [
-        "/^\\.config/hk\\.pkl$/"
-      ],
+      "managerFilePatterns": ["/^\\.config/hk\\.pkl$/"],
       "matchStrings": [
         "package://github\\.com/jdx/hk/releases/download/v(?<currentValue>\\d+\\.\\d+\\.\\d+)/",
         "package://github\\.com/jdx/hk/releases/download/v\\d+\\.\\d+\\.\\d+/hk@(?<currentValue>\\d+\\.\\d+\\.\\d+)#/"
@@ -31,17 +25,26 @@
   ],
   "packageRules": [
     {
-      "matchUpdateTypes": [
-        "patch",
-        "pin",
-        "digest"
-      ],
+      "matchManagers": ["mise"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "mise tools"
+    },
+    {
+      "matchFileNames": [".config/hk.pkl"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "mise tools"
+    },
+    {
+      "matchPackageNames": ["hk", "jdx/hk"],
+      "matchUpdateTypes": ["major"],
+      "groupName": "hk"
+    },
+    {
+      "matchUpdateTypes": ["patch", "pin", "digest"],
       "automerge": true
     },
     {
-      "matchUpdateTypes": [
-        "minor"
-      ],
+      "matchUpdateTypes": ["minor"],
       "matchCurrentVersion": "!/^0/",
       "automerge": true
     }

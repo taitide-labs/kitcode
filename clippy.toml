@@ -1,0 +1,19 @@
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-panic-in-tests = true
+allow-dbg-in-tests = true
+allow-print-in-tests = true
+
+disallowed-types = [
+  { path = "std::sync::Mutex", reason = "同步临界区必须使用 parking_lot::Mutex，跨 .await 必须使用 tokio::sync::Mutex" },
+]
+
+disallowed-methods = [
+  { path = "std::thread::sleep", reason = "会阻塞异步工作线程，必须使用 tokio::time::sleep" },
+  { path = "std::fs::read_to_string", reason = "会阻塞异步工作线程，必须使用 tokio::fs" },
+  { path = "std::env::var", reason = "破坏并行测试隔离，必须通过配置结构体注入" },
+  { path = "std::time::SystemTime::now", reason = "破坏测试确定性，必须注入时钟抽象" },
+  { path = "jiff::Timestamp::now", allow-invalid = true, reason = "破坏测试确定性，必须注入时钟抽象" },
+  { path = "jiff::Zoned::now", allow-invalid = true, reason = "破坏测试确定性，必须注入时钟抽象" },
+  { path = "chrono::Utc::now", allow-invalid = true, reason = "已由 jiff 替代且破坏测试确定性，必须注入时钟抽象" },
+]

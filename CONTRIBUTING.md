@@ -1,63 +1,37 @@
 # 贡献指南
 
-> 本仓库目前仅接受内部维护者的 Pull Request，暂不接受外部 PR。欢迎通过 Issue 反馈 Bug 或功能建议。
+> 本仓库暂不接受外部 PR，仅接受内部维护者的 PR。欢迎通过 Issue 反馈 Bug 或功能建议。
 
-本仓库使用 `mise` 管理工具链、使用 `hk` 编排本地 Git Hooks，所有内部变更均通过 Pull Request 合入 `main` 分支。
+## 本地环境初始化
 
-## 1. 本地环境初始化
-
-克隆仓库后，在根目录安装项目依赖工具并激活 Git Hooks：
+本仓库使用 `mise` 管理工具链、使用 `hk` 编排本地 Git Hooks；首次克隆项目后，在根目录安装项目依赖工具并激活 Git Hooks：
 
 ```sh
 mise install
-hk install --mise
+mise run hooks
 ```
 
 激活后，以下 Git Hooks 会自动生效：
 
-- **`pre-commit`**：运行文档规范、Mermaid 语法、离线死链、拼写检查，以及 `cargo fmt`、`cargo clippy`、`cargo test`。
+- **`pre-commit`**：校验并尝试修复文档规范；执行 GitHub Workflows 安全检查，以及 `cargo fmt`、`ast-grep` 架构检查、`cargo clippy`、`cargo nextest`。
 - **`commit-msg`**：校验提交信息是否符合 Conventional Commits 规范。
-- **`pre-push`**：运行 `cargo deny check` 审计依赖安全与许可证合规。
+- **`pre-push`**：当依赖或策略配置变更时执行 `cargo deny` 合规审计。
 
-## 2. 常用检查命令
+## Commit 与版本规范
 
-- 执行全量只读检查：
-
-  ```sh
-  mise run check
-  ```
-
-- 自动修复排版、Markdown 格式与代码格式：
-
-  ```sh
-  mise run fmt
-  ```
-
-## 3. 提交与版本规范
-
-本仓库采用 [Conventional Commits 1.0.0](https://www.conventionalcommits.org/) 与 [How to Write a Git Commit Message](https://cbea.ms/git-commit/) 规范提交信息，并遵循 [Semantic Versioning 2.0.0](https://semver.org/) 规范管理版本号。
-
-所有提交信息须遵循以下格式：
+遵循 Conventional Commits 与 Semantic Versioning 规范：
 
 ```text
-<type>(<scope>): <简述>
+<type>(<scope>): <动词开头的祈使短语，概括变更意图；严禁描述细节；使用中文>
 
-<变更动机（可选）>
-
-BREAKING CHANGE: <破坏性变更说明（可选）>
+<可选正文：仅当变更缘由无法从代码差异自明时补充；使用中文>
 ```
 
-常用 `<type>` 说明：
+- 破坏性变更统一在作用域后标注感叹号 `<type>(<scope>)!:`。
+- 合入 `main` 的 `feat`、`fix` 与破坏性变更会自动触发 `release-please` 创建或更新 Release PR（在 `0.x` 阶段破坏性变更仅升级次版本号，`>= 1.0.0` 后升级主版本号；其余提交类型不触发发版）。
 
-- `feat`：新增面向用户的功能（触发次版本升级）
-- `fix`：修复面向用户的缺陷（触发修订号升级）
-- `feat!` / `BREAKING CHANGE:`：包含破坏性变更（`>= 1.0.0` 时触发主版本号升级）
-- `docs`：仅修改文档
-- `refactor`：代码重构（无新功能且无缺陷修复）
-- `chore` / `ci`：工程基建、依赖或 CI 流程调整
+## Pull Request 流程
 
-## 4. Pull Request 流程
-
-1. 从 `main` 分支创建特性或修复分支（仓库规则禁止直接向 `main` 推送）。
-2. 提交前确认本地 `mise run check` 全部通过。
-3. 创建 Pull Request，确保标题符合上述提交规范，等待 `Merge Gate`（`Path Filter`、`Docs Checks`、`Checks`、`Security`）全部通过后使用 `Squash and merge` 合并。
+1. 从 `main` 切出分支。
+2. 创建 PR 并开启自动合并与删除分支，确保标题符合 Commit 规范、正文符合 [pull_request_template.md](.github/pull_request_template.md) 规范。
+3. 等待 `Merge Gate` 全部检查通过后使用 `Squash and merge` 合并。

@@ -5,33 +5,34 @@ name: CI
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-  push:
-    branches:
-      - main
+  merge_group:
 
 permissions: {}
 
 concurrency:
-  group: ci-${{ github.event.pull_request.head.sha || github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.head_ref || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   plan:
     name: Path Filter
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     permissions:
       contents: read
-      pull-requests: read
+      pull-requests: read # Read changed files for dorny/paths-filter on PRs
     outputs:
       docs: ${{ steps.filter.outputs.docs }}
-      code: ${{ steps.filter.outputs.code }}
+      code: ${{ steps.filter.outputs.code == 'true' && !startsWith(github.head_ref, 'release-please--') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
           persist-credentials: false
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: filter
         with:
+          predicate-quantifier: "some-with-excludes"
           filters: |
             docs:
               - '**/*.md'
@@ -52,24 +53,27 @@ jobs:
     name: Docs Checks
     needs: plan
     if: ${{ needs.plan.outputs.docs == 'true' || needs.plan.outputs.code == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
+      - uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5.2.9
         with:
           install: true
+          install_args: --locked
+          cache_save: false
       - name: Run docs checks
-        run: mise x -- hk check --all -q --step autocorrect --step rumdl --step mmdr --step lychee --step typos
+        run: hk check --all -q -n -p docs
 
   checks:
     name: Checks
     needs: plan
     if: ${{ needs.plan.outputs.code == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
     permissions:
       contents: read
     steps:
@@ -81,17 +85,23 @@ jobs:
           toolchain: stable
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
-      - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
+        with:
+          shared-key: ci-checks
+          add-job-id-key: false
+          save-if: false
+      - uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5.2.9
         with:
           install: true
+          install_args: --locked
+          cache_save: false
       - name: Run code checks
-        run: mise x -- hk check --all -q --step cargo_fmt --step cargo_clippy --step cargo_test
+        run: hk check --all -q -n -p code
 
   security:
     name: Security
     needs: plan
     if: ${{ needs.plan.outputs.code == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -99,19 +109,23 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
+      - uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5.2.9
         with:
           install: true
+          install_args: --locked
+          cache_save: false
+      - name: Scan workflows with zizmor
+        run: zizmor --offline --quiet .github/workflows
       - name: Scan for leaked secrets
-        run: mise x -- gitleaks git --verbose --redact .
-      - name: Audit dependencies with cargo-deny
-        run: mise x -- cargo deny check
+        run: gitleaks git --no-banner --log-level warn --redact .
+      - name: Audit dependencies
+        run: mise run audit
 
   gate:
     name: Merge Gate
     needs: [plan, docs, checks, security]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Verify required checks
         env:

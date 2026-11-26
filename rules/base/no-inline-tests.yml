@@ -1,0 +1,22 @@
+id: no-inline-tests-in-source
+language: rust
+severity: error
+files:
+  - "crates/**/*.rs"
+  - "e2e/**/*.rs"
+ignores:
+  - "**/tests.rs"
+  - "**/tests/**/*.rs"
+message: "严禁在业务源码内编写测试代码，必须在模块声明文件挂载 #[cfg(test)] mod tests; 并拆入独立测试文件"
+rule:
+  any:
+    - kind: attribute_item
+      regex: "^#\\[(tokio::|sqlx::|rstest::)?test"
+    - kind: mod_item
+      all:
+        - has:
+            field: name
+            regex: "tests"
+        - has:
+            field: body
+            kind: declaration_list

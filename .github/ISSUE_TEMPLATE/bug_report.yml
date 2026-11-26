@@ -21,6 +21,6 @@ body:
     id: environment
     attributes:
       label: 运行环境
-      description: 例如操作系统、工具版本（`mise --version` 等）。
+      description: 例如操作系统或工具版本，可通过 `mise --version` 查看。
     validations:
       required: false

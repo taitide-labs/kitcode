@@ -1,8 +1,16 @@
 use std::env;
 use std::process::ExitCode;
 
+#[cfg(test)]
+mod tests;
+
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+#[expect(
+    clippy::print_stdout,
+    clippy::print_stderr,
+    reason = "CLI entrypoint writes user-facing output directly to stdout/stderr"
+)]
 fn run(args: &[String]) -> i32 {
     match args.first().map(String::as_str) {
         Some("-V" | "--version") => {
@@ -30,17 +38,4 @@ fn main() -> ExitCode {
     let args: Vec<String> = env::args().skip(1).collect();
     let code = run(&args);
     ExitCode::from(code as u8)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::run;
-
-    #[test]
-    fn prints_version_and_help() {
-        assert_eq!(run(&["--version".to_string()]), 0);
-        assert_eq!(run(&["--help".to_string()]), 0);
-        assert_eq!(run(&[]), 0);
-        assert_eq!(run(&["--unknown".to_string()]), 2);
-    }
 }
