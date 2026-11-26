@@ -1,0 +1,57 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: Main Cache Warmup
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**/Cargo.toml'
+      - '**/Cargo.lock'
+      - 'mise.toml'
+      - 'mise.lock'
+      - 'clippy.toml'
+      - 'rust-toolchain.toml'
+      - '.cargo/config.toml'
+      - '.github/workflows/ci.yml'
+      - '.github/workflows/cache-warmup.yml'
+  schedule:
+    - cron: "23 3 * * 1"
+  workflow_dispatch:
+
+permissions: {}
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_TERM_COLOR: always
+
+concurrency:
+  group: cache-warmup-main
+  cancel-in-progress: true
+
+jobs:
+  warmup:
+    name: Seed Main Caches
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Setup Rust toolchain
+        run: rustup install --profile minimal
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        id: rust-cache
+        with:
+          shared-key: ci-checks
+      - uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5.2.9
+        with:
+          install_args: --locked
+      - name: Precompile dependencies and test binaries
+        if: ${{ github.event_name != 'schedule' || steps.rust-cache.outputs.cache-hit != 'true' }}
+        run: |
+          cargo clippy -q --workspace --all-targets --locked -- -D warnings
+          cargo nextest run --workspace --locked --no-run --cargo-quiet

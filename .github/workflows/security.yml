@@ -9,51 +9,63 @@ on:
 
 permissions: {}
 
+concurrency:
+  group: scheduled-security
+  cancel-in-progress: true
+
 jobs:
   codeql:
     name: CodeQL Deep Scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     permissions:
-      actions: read
+      actions: read # Read workflow run metadata for CodeQL
       contents: read
-      security-events: write
+      security-events: write # Upload SARIF analysis results
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
-        with:
-          toolchain: stable
+      - name: Setup Rust toolchain
+        run: rustup install --profile minimal
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - uses: github/codeql-action/init@52cf1852265d99e9bea071b03366fc777a602909 # codeql-bundle-v2.27.4
         with:
           languages: rust
           queries: security-and-quality
+          config-file: ./.github/codeql/codeql-config.yml
       - name: Build for CodeQL analysis
-        run: cargo build --all-targets --locked
+        run: cargo build --workspace --locked
       - uses: github/codeql-action/analyze@52cf1852265d99e9bea071b03366fc777a602909 # codeql-bundle-v2.27.4
 
   cargo-deny:
     name: Weekly Dependency Audit
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
+      - uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5.2.9
         with:
-          install: true
+          install: false
+          cache_save: false
+      - name: Install cargo-deny
+        run: mise install --locked cargo-deny
       - name: Run cargo-deny
-        run: mise x -- cargo deny check
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: mise run audit
 
   zizmor:
     name: Workflow Security Audit
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     permissions:
       contents: read
-      security-events: write
+      security-events: write # Upload workflow audit SARIF
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

@@ -1,39 +1,74 @@
 amends "package://github.com/jdx/hk/releases/download/v2.12.0/hk@2.12.0#/Config.pkl"
 import "package://github.com/jdx/hk/releases/download/v2.12.0/hk@2.12.0#/Builtins.pkl"
 
+profiles = List("docs", "code", "security")
+terminal_progress = false
+display_skip_reasons = List()
+
 steps {
   ["autocorrect"] {
-    glob = List("*.md", "*.rs")
+    profiles = List("docs")
+    glob = List("*.md")
     check = "autocorrect --config .config/autocorrectrc --lint {{files}}"
     fix = "autocorrect --config .config/autocorrectrc --fix {{files}}"
   }
 
   ["rumdl"] {
+    profiles = List("docs")
     glob = List("*.md")
     check = "rumdl check --config .config/rumdl.toml {{files}}"
     fix = "rumdl check --config .config/rumdl.toml --fix {{files}}"
   }
 
   ["mmdr"] {
+    profiles = List("docs", "!fmt")
     glob = List("*.md")
     check = "for f in {{files}}; do if grep -q '```mermaid' \"$f\"; then mmdr -i \"$f\" --size --fastText >/dev/null || exit 1; fi; done"
   }
 
   ["lychee"] {
+    profiles = List("docs", "!fmt")
     glob = List("*.md")
     check = "lychee --config .config/lychee.toml --offline {{files}}"
   }
 
-  ["typos"] = Builtins.typos
-  ["cargo_fmt"] = Builtins.cargo_fmt
+  ["typos"] = (Builtins.typos) {
+    profiles = List("docs", "!fmt")
+    exclude = List("CHANGELOG.md")
+  }
+
+  ["zizmor"] {
+    profiles = List("security", "!fmt")
+    glob = List(".github/workflows/*.yml", ".github/workflows/*.yaml")
+    check = "zizmor --offline --quiet {{files}}"
+  }
+
+  ["cargo_fmt"] = (Builtins.cargo_fmt) {
+    profiles = List("code")
+  }
+
+  ["ast_grep"] {
+    profiles = List("code", "!fmt")
+    glob = List("**/*.rs")
+    check = "ast-grep scan {{files}}"
+  }
+
+  ["ast_grep_rules"] {
+    profiles = List("code", "!fmt")
+    glob = List("sgconfig.yml", "rules/**/*.yml")
+    check = "ast-grep scan"
+  }
+
   ["cargo_clippy"] {
-    glob = List("**/*.rs", "Cargo.toml", "Cargo.lock")
-    check = "cargo clippy --manifest-path Cargo.toml --all-targets -- -D warnings"
+    profiles = List("code", "!fmt")
+    glob = List("**/*.rs", "Cargo.toml", "Cargo.lock", "clippy.toml")
+    check = "cargo clippy -q --workspace --all-targets --locked -- -D warnings"
   }
 
   ["cargo_test"] {
-    glob = List("*.rs", "Cargo.toml", "Cargo.lock")
-    check = "cargo test --locked"
+    profiles = List("code", "!fmt")
+    glob = List("**/*.rs", "Cargo.toml", "Cargo.lock")
+    check = "cargo nextest run --workspace --locked --no-tests=pass --cargo-quiet --status-level=fail --final-status-level=fail --show-progress=none"
   }
 }
 
@@ -46,7 +81,10 @@ hooks {
 
   ["pre-push"] {
     steps {
-      ["cargo_deny"] = Builtins.cargo_deny
+      ["cargo_deny"] {
+        glob = List("Cargo.toml", "Cargo.lock", "deny.toml", "**/Cargo.toml")
+        check = "cargo deny --locked -L error check --hide-inclusion-graph"
+      }
     }
   }
 }

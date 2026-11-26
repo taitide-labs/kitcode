@@ -1,0 +1,11 @@
+id: no-line-comments
+language: rust
+severity: error
+message: "禁止在源码保留普通行内注释；请删除赘述或借口注释，用类型与命名表达意图，仅豁免 ///、//! 与 // SAFETY: 说明"
+files:
+  - "crates/**/*.rs"
+  - "e2e/**/*.rs"
+rule:
+  kind: line_comment
+  not:
+    regex: "^(///|//!|// SAFETY:)"

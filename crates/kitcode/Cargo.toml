@@ -1,0 +1,13 @@
+[package]
+name = "kitcode"
+version.workspace = true
+edition.workspace = true
+description = "KitCode Agent is an AI agent built in Rust."
+license.workspace = true
+repository.workspace = true
+readme = "../../README.md"
+keywords = ["ai", "agent", "cli", "coding"]
+categories = ["command-line-utilities", "development-tools"]
+
+[lints]
+workspace = true

@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 
-name: PR Policy
+name: Close Fork PRs
 
 on:
   pull_request_target: # zizmor: ignore[dangerous-triggers]
@@ -8,13 +8,16 @@ on:
 
 permissions: {}
 
+concurrency:
+  group: close-fork-prs-${{ github.event.pull_request.number }}
+
 jobs:
   close-external-pr:
     name: Close External Fork PR
     if: ${{ github.event.pull_request.head.repo.fork == true }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
-      pull-requests: write
+      pull-requests: write # Close external fork PRs and post polite notice
     steps:
       - name: Politely close external pull request
         env:
