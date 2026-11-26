@@ -34,4 +34,3 @@ mise run hooks
 
 1. 从 `main` 切出分支。
 2. 创建 PR 并开启自动合并与删除分支，确保标题符合 Commit 规范、正文符合 [pull_request_template.md](.github/pull_request_template.md) 规范。
-3. 等待 `Merge Gate` 全部检查通过后使用 `Squash and merge` 合并。
