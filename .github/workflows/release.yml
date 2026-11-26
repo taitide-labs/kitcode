@@ -22,6 +22,7 @@ jobs:
   release-please:
     name: Release Please
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     permissions:
       contents: write # Create release tags and draft releases
       pull-requests: write # Create and update release PRs
@@ -64,6 +65,7 @@ jobs:
             runner: windows-latest
             ext: zip
     runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:
@@ -94,10 +96,18 @@ jobs:
           TARGET: ${{ matrix.target }}
           EXT: ${{ matrix.ext }}
         run: |
-          pkg=$(cargo metadata --no-deps --format-version 1 | jq -c --arg name "$PKG_NAME" '.packages[] | select(.name == $name)')
-          pkg_name=$(echo "$pkg" | jq -r '.name')
-          bin_name=$(echo "$pkg" | jq -r '(.targets[] | select(.kind | index("bin")) | .name)' | head -n 1)
-          bin_name="${bin_name:-$pkg_name}"
+          set -euo pipefail
+          {
+            IFS= read -r pkg_name
+            IFS= read -r bin_name
+          } < <(
+            cargo metadata --no-deps --format-version 1 | jq -r --arg name "$PKG_NAME" '
+              (.packages[] | select(.name == $name)) as $p |
+              $p.name,
+              ((first($p.targets[] | select(.kind | index("bin")) | .name)) // $p.name)
+            '
+          )
+          test -n "$pkg_name" && test -n "$bin_name"
           mkdir -p dist
           if [ "$EXT" = "zip" ]; then
             7z a "dist/${pkg_name}-${TARGET}.zip" "./target/${TARGET}/release/${bin_name}.exe"
@@ -113,6 +123,7 @@ jobs:
     name: Upload & Attest Release Assets
     needs: [release-please, build]
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     permissions:
       contents: write # Upload release assets and publish release
       id-token: write # Mint OIDC token for SLSA attestation
@@ -125,8 +136,12 @@ jobs:
           merge-multiple: true
       - name: Generate checksums
         run: |
+          set -euo pipefail
+          shopt -s nullglob
           cd artifacts
-          sha256sum *.tar.gz *.zip > SHA256SUMS.txt
+          files=(./*.tar.gz ./*.zip)
+          test "${#files[@]}" -gt 0
+          sha256sum -- "${files[@]#./}" > SHA256SUMS.txt
       - name: Attest build provenance
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
@@ -146,6 +161,7 @@ jobs:
     name: Publish to crates.io
     needs: [release-please, upload-assets]
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     permissions:
       contents: read
       id-token: write # OIDC Trusted Publishing for crates.io
@@ -164,6 +180,7 @@ jobs:
     name: Publish to npm
     needs: [release-please, upload-assets]
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     permissions:
       contents: read
       id-token: write # OIDC provenance publishing for npm
@@ -179,47 +196,48 @@ jobs:
       - name: Build and publish npm wrapper
         env:
           TAG: ${{ needs.release-please.outputs.tag_name }}
-          REPO: ${{ github.repository }}
         run: |
-          version="${TAG#v}"
-          pkg=$(cargo metadata --no-deps --format-version 1 | jq -c --arg name "$PKG_NAME" '.packages[] | select(.name == $name)')
-          pkg_name=$(echo "$pkg" | jq -r '.name')
-          pkg_desc=$(echo "$pkg" | jq -r '.description')
-          pkg_license=$(echo "$pkg" | jq -r '.license')
-          pkg_repo=$(echo "$pkg" | jq -r '.repository')
-
+          set -euo pipefail
           mkdir -p npm-pkg/bin
-          jq -n \
-            --arg name "${NPM_SCOPE}/${pkg_name}" \
-            --arg version "$version" \
-            --arg desc "$pkg_desc" \
-            --arg license "$pkg_license" \
-            --arg repo "${pkg_repo}.git" \
-            --arg bin "$pkg_name" \
-            '{
-              name: $name,
-              version: $version,
-              description: $desc,
-              license: $license,
-              repository: { type: "git", url: $repo },
-              bin: { ($bin): ("bin/" + $bin + ".js") },
-              scripts: { postinstall: "node install.js" }
-            }' > npm-pkg/package.json
 
-          cat > "npm-pkg/bin/${pkg_name}.js" <<EOF
+          cargo metadata --no-deps --format-version 1 | jq \
+            --arg pkg_name "$PKG_NAME" \
+            --arg scope "$NPM_SCOPE" \
+            --arg version "${TAG#v}" \
+            '
+              (.packages[] | select(.name == $pkg_name)) as $p |
+              ((first($p.targets[] | select(.kind | index("bin")) | .name)) // $p.name) as $bin |
+              {
+                name: "\($scope)/\($p.name)",
+                version: $version,
+                description: ($p.description // ""),
+                license: ($p.license // "MIT"),
+                repository: { type: "git", url: (($p.repository | sub("/+$"; "")) + ".git") },
+                bin: { ($bin): ("bin/" + $bin + ".js") },
+                scripts: { postinstall: "node install.js" }
+              }
+            ' > npm-pkg/package.json
+
+          bin_name=$(jq -r '.bin | keys[0]' npm-pkg/package.json)
+          test -n "$bin_name"
+
+          cat > "npm-pkg/bin/${bin_name}.js" <<'EOF'
           #!/usr/bin/env node
-          const { spawnSync } = require("child_process");
-          const path = require("path");
-          const bin = path.join(__dirname, process.platform === "win32" ? "${pkg_name}.exe" : "${pkg_name}");
+          const { spawnSync } = require("node:child_process");
+          const path = require("node:path");
+          const pkg = require("../package.json");
+          const binName = Object.keys(pkg.bin)[0];
+          const bin = path.join(__dirname, process.platform === "win32" ? `${binName}.exe` : binName);
           const res = spawnSync(bin, process.argv.slice(2), { stdio: "inherit" });
+          if (res.error) throw res.error;
           process.exit(res.status ?? 1);
           EOF
 
-          cat > npm-pkg/install.js <<EOF
-          const https = require("https");
-          const fs = require("fs");
-          const path = require("path");
-          const { execSync } = require("child_process");
+          cat > npm-pkg/install.js <<'EOF'
+          const https = require("node:https");
+          const fs = require("node:fs");
+          const path = require("node:path");
+          const { execSync } = require("node:child_process");
           const pkg = require("./package.json");
           const map = {
             "darwin-arm64": "aarch64-apple-darwin.tar.gz",
@@ -227,16 +245,18 @@ jobs:
             "linux-arm64": "aarch64-unknown-linux-gnu.tar.gz",
             "win32-x64": "x86_64-pc-windows-msvc.zip"
           };
-          const suffix = map[\`\${process.platform}-\${process.arch}\`];
-          if (!suffix) throw new Error(\`Unsupported platform: \${process.platform}-\${process.arch}\`);
-          const url = \`https://github.com/${REPO}/releases/download/v\${pkg.version}/${pkg_name}-\${suffix}\`;
+          const suffix = map[`${process.platform}-${process.arch}`];
+          if (!suffix) throw new Error(`Unsupported platform: ${process.platform}-${process.arch}`);
+          const pkgBase = pkg.name.split("/").pop();
+          const repoUrl = pkg.repository.url.replace(/\.git$/, "");
+          const url = `${repoUrl}/releases/download/v${pkg.version}/${pkgBase}-${suffix}`;
           const out = path.join(__dirname, "bin", suffix);
           function download(u, cb) {
             https.get(u, (res) => {
               if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
                 return download(res.headers.location, cb);
               }
-              if (res.statusCode !== 200) return cb(new Error(\`HTTP \${res.statusCode}\`));
+              if (res.statusCode !== 200) return cb(new Error(`HTTP ${res.statusCode}`));
               const file = fs.createWriteStream(out);
               res.pipe(file).on("finish", () => file.close(cb));
             }).on("error", cb);
@@ -244,9 +264,9 @@ jobs:
           download(url, (err) => {
             if (err) throw err;
             if (suffix.endsWith(".zip")) {
-              execSync(\`powershell -Command "Expand-Archive -Force '\${out}' '\${path.join(__dirname, "bin")}'"\`);
+              execSync(`powershell -Command "Expand-Archive -Force '${out}' '${path.join(__dirname, "bin")}'"`);
             } else {
-              execSync(\`tar -xzf "\${out}" -C "\${path.join(__dirname, "bin")}"\`);
+              execSync(`tar -xzf "${out}" -C "${path.join(__dirname, "bin")}"`);
             }
             fs.unlinkSync(out);
           });
@@ -258,6 +278,7 @@ jobs:
     name: Update Homebrew Tap
     needs: [release-please, upload-assets]
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     permissions:
       contents: read
     steps:
@@ -281,13 +302,26 @@ jobs:
           REPO: ${{ github.repository }}
           TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
+          set -euo pipefail
           version="${TAG#v}"
-          pkg=$(cargo metadata --no-deps --format-version 1 | jq -c --arg name "$PKG_NAME" '.packages[] | select(.name == $name)')
-          pkg_name=$(echo "$pkg" | jq -r '.name')
-          pkg_desc=$(echo "$pkg" | jq -r '.description')
-          pkg_license=$(echo "$pkg" | jq -r '.license')
-          pkg_home=$(echo "$pkg" | jq -r '.homepage // .repository')
-          formula_class=$(echo "$pkg_name" | awk -F'[-_]' '{for(i=1;i<=NF;i++) printf toupper(substr($i,1,1)) substr($i,2)}')
+          {
+            IFS= read -r pkg_name
+            IFS= read -r bin_name
+            IFS= read -r pkg_desc
+            IFS= read -r pkg_license
+            IFS= read -r pkg_home
+          } < <(
+            cargo metadata --no-deps --format-version 1 | jq -r --arg name "$PKG_NAME" '
+              (.packages[] | select(.name == $name)) as $p |
+              $p.name,
+              ((first($p.targets[] | select(.kind | index("bin")) | .name)) // $p.name),
+              ($p.description // ""),
+              ($p.license // ""),
+              ($p.homepage // $p.repository)
+            '
+          )
+          test -n "$pkg_name" && test -n "$bin_name"
+          formula_class=$(printf '%s' "$pkg_name" | awk -F'[-_]' '{for(i=1;i<=NF;i++) printf toupper(substr($i,1,1)) substr($i,2)}')
 
           sha_mac_arm=$(sha256sum "artifacts/${pkg_name}-aarch64-apple-darwin.tar.gz" | awk '{print $1}')
           sha_lin_x64=$(sha256sum "artifacts/${pkg_name}-x86_64-unknown-linux-gnu.tar.gz" | awk '{print $1}')
@@ -320,11 +354,11 @@ jobs:
             end
 
             def install
-              bin.install "${pkg_name}"
+              bin.install "${bin_name}"
             end
 
             test do
-              assert_match version.to_s, shell_output("#{bin}/${pkg_name} --version")
+              assert_match version.to_s, shell_output("#{bin}/${bin_name} --version")
             end
           end
           EOF

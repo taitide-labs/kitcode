@@ -121,7 +121,7 @@ jobs:
         with:
           install_args: --locked
           cache_save: false
-      - name: Scan workflows with zizmor
+      - name: Audit workflows
         if: ${{ needs.plan.outputs.workflows == 'true' }}
         run: hk check --all -q -n -p security
       - name: Scan PR commits for leaked secrets

@@ -25,7 +25,7 @@ steps {
   ["mmdr"] {
     profiles = List("docs", "!fmt")
     glob = List("**/*.md")
-    check = "for f in {{files}}; do if grep -q '```mermaid' \"$f\"; then mmdr -i \"$f\" --size --fastText >/dev/null || exit 1; fi; done"
+    check = "rc=0; for f in {{files}}; do if grep -q '```mermaid' \"$f\"; then mmdr -i \"$f\" --size --fastText >/dev/null || rc=1; fi; done; exit \"$rc\""
   }
 
   ["lychee"] {
@@ -43,6 +43,12 @@ steps {
     profiles = List("security", "!fmt")
     glob = List(".github/workflows/*.yml", ".github/workflows/*.yaml")
     check = "zizmor --offline --quiet {{files}}"
+  }
+
+  ["jactionlint"] {
+    profiles = List("security", "!fmt")
+    glob = List(".github/workflows/*.yml", ".github/workflows/*.yaml")
+    check = "jactionlint {{files}}"
   }
 
   ["cargo_fmt"] = (Builtins.cargo_fmt) {
