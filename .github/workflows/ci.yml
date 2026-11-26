@@ -9,6 +9,10 @@ on:
 
 permissions: {}
 
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_TERM_COLOR: always
+
 concurrency:
   group: ci-${{ github.head_ref || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -71,7 +75,6 @@ jobs:
           persist-credentials: false
       - uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5.2.9
         with:
-          install: true
           install_args: --locked
           cache_save: false
       - name: Run docs checks
@@ -89,18 +92,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
-        with:
-          toolchain: stable
-          components: rustfmt, clippy
+      - name: Setup Rust toolchain
+        run: rustup set profile minimal && rustup show active-toolchain >/dev/null
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           shared-key: ci-checks
-          add-job-id-key: false
           save-if: false
       - uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5.2.9
         with:
-          install: true
           install_args: --locked
           cache_save: false
       - name: Run code checks
@@ -121,7 +120,6 @@ jobs:
           persist-credentials: false
       - uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5.2.9
         with:
-          install: true
           install_args: --locked
           cache_save: false
       - name: Scan workflows with zizmor
