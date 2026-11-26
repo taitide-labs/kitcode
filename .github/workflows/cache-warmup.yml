@@ -44,12 +44,14 @@ jobs:
       - name: Setup Rust toolchain
         run: rustup install --profile minimal
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        id: rust-cache
         with:
           shared-key: ci-checks
       - uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5.2.9
         with:
           install_args: --locked
       - name: Precompile dependencies and test binaries
+        if: ${{ github.event_name != 'schedule' || steps.rust-cache.outputs.cache-hit != 'true' }}
         run: |
-          cargo clippy -q --manifest-path Cargo.toml --workspace --all-targets --locked -- -D warnings
-          cargo nextest run --manifest-path Cargo.toml --workspace --locked --no-run --cargo-quiet
+          cargo clippy -q --workspace --all-targets --locked -- -D warnings
+          cargo nextest run --workspace --locked --no-run --cargo-quiet

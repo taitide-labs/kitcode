@@ -62,13 +62,13 @@ steps {
   ["cargo_clippy"] {
     profiles = List("code", "!fmt")
     glob = List("**/*.rs", "Cargo.toml", "Cargo.lock", "clippy.toml")
-    check = "cargo clippy -q --manifest-path Cargo.toml --workspace --all-targets --locked -- -D warnings"
+    check = "cargo clippy -q --workspace --all-targets --locked -- -D warnings"
   }
 
   ["cargo_test"] {
     profiles = List("code", "!fmt")
     glob = List("**/*.rs", "Cargo.toml", "Cargo.lock")
-    check = "cargo nextest run --manifest-path Cargo.toml --workspace --locked --no-tests=pass --cargo-quiet --status-level=fail --final-status-level=fail --show-progress=none"
+    check = "cargo nextest run --workspace --locked --no-tests=pass --cargo-quiet --status-level=fail --final-status-level=fail --show-progress=none"
   }
 }
 

@@ -9,10 +9,6 @@ on:
 
 permissions: {}
 
-env:
-  CARGO_INCREMENTAL: 0
-  CARGO_TERM_COLOR: always
-
 concurrency:
   group: ci-${{ github.head_ref || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -86,6 +82,9 @@ jobs:
     if: ${{ needs.plan.outputs.code == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    env:
+      CARGO_INCREMENTAL: 0
+      CARGO_TERM_COLOR: always
     permissions:
       contents: read
     steps:
