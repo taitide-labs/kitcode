@@ -28,10 +28,6 @@ run = "hk check --all -q -n"
 description = "Run tests via nextest (supports -p <crate>, <filter>, or -E <expr>)"
 run = "cargo nextest run --workspace --locked --no-tests=pass --cargo-quiet --status-level=fail --final-status-level=fail --show-progress=none"
 
-[tasks.e2e]
-description = "Run end-to-end acceptance tests"
-run = "cargo nextest run --workspace --locked --no-tests=pass --cargo-quiet --status-level=fail --final-status-level=fail --show-progress=none -E 'test(/^e2e_/)'"
-
 [tasks.audit]
 description = "Audit dependencies for vulnerabilities and license compliance"
 run = "cargo deny --locked -L error check --hide-inclusion-graph"
