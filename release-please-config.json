@@ -19,7 +19,7 @@
         {
           "type": "toml",
           "path": "Cargo.lock",
-          "jsonpath": "$.package[?(@.name.value=='kitcode')].version"
+          "jsonpath": "$.package[?(!@.source)].version"
         }
       ]
     }
