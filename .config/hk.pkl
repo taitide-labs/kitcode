@@ -10,27 +10,27 @@ local cargo_manifests = List("Cargo.toml", "**/Cargo.toml", "Cargo.lock", "rust-
 steps {
   ["autocorrect"] {
     profiles = List("docs")
-    glob = List("*.md")
+    glob = List("**/*.md")
     check = "autocorrect --config .config/autocorrectrc --lint {{files}}"
     fix = "autocorrect --config .config/autocorrectrc --fix {{files}}"
   }
 
   ["rumdl"] {
     profiles = List("docs")
-    glob = List("*.md")
+    glob = List("**/*.md")
     check = "rumdl check --config .config/rumdl.toml {{files}}"
     fix = "rumdl check --config .config/rumdl.toml --fix {{files}}"
   }
 
   ["mmdr"] {
     profiles = List("docs", "!fmt")
-    glob = List("*.md")
+    glob = List("**/*.md")
     check = "for f in {{files}}; do if grep -q '```mermaid' \"$f\"; then mmdr -i \"$f\" --size --fastText >/dev/null || exit 1; fi; done"
   }
 
   ["lychee"] {
     profiles = List("docs", "!fmt")
-    glob = List("*.md")
+    glob = List("**/*.md")
     check = "lychee --config .config/lychee.toml --offline {{files}}"
   }
 
@@ -69,6 +69,7 @@ steps {
 
   ["cargo_test"] {
     profiles = List("code", "!fmt")
+    depends = "cargo_clippy"
     glob = cargo_manifests + List("**/*.rs")
     check = "cargo nextest run --workspace --locked --no-tests=pass --cargo-quiet --status-level=fail --final-status-level=fail --show-progress=none"
   }

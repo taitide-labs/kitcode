@@ -28,14 +28,12 @@ jobs:
           persist-credentials: false
       - name: Setup Rust toolchain
         run: rustup install --profile minimal
-      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - uses: github/codeql-action/init@52cf1852265d99e9bea071b03366fc777a602909 # codeql-bundle-v2.27.4
         with:
           languages: rust
+          build-mode: none
           queries: security-and-quality
           config-file: ./.github/codeql/codeql-config.yml
-      - name: Build for CodeQL analysis
-        run: cargo build --workspace --locked
       - uses: github/codeql-action/analyze@52cf1852265d99e9bea071b03366fc777a602909 # codeql-bundle-v2.27.4
 
   cargo-deny:
