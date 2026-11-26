@@ -27,7 +27,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Rust toolchain
-        run: rustup set profile minimal && rustup show active-toolchain >/dev/null
+        run: rustup install --profile minimal
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - uses: github/codeql-action/init@52cf1852265d99e9bea071b03366fc777a602909 # codeql-bundle-v2.27.4
         with:
@@ -55,6 +55,8 @@ jobs:
       - name: Install cargo-deny
         run: mise install --locked cargo-deny
       - name: Run cargo-deny
+        env:
+          RUSTUP_TOOLCHAIN: stable
         run: mise run audit
 
   zizmor:
