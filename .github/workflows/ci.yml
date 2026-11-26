@@ -4,7 +4,7 @@ name: CI
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened]
   merge_group:
 
 permissions: {}
@@ -24,6 +24,8 @@ jobs:
     outputs:
       docs: ${{ steps.filter.outputs.docs }}
       code: ${{ steps.filter.outputs.code == 'true' && !startsWith(github.head_ref, 'release-please--') }}
+      deps: ${{ steps.filter.outputs.deps == 'true' && !startsWith(github.head_ref, 'release-please--') }}
+      workflows: ${{ steps.filter.outputs.workflows == 'true' && !startsWith(github.head_ref, 'release-please--') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -48,12 +50,19 @@ jobs:
               - '!.config/rumdl.toml'
               - '!.config/autocorrectrc'
               - '!.config/lychee.toml'
+            deps:
+              - '**/Cargo.toml'
+              - '**/Cargo.lock'
+              - 'deny.toml'
+            workflows:
+              - '.github/workflows/**'
 
   docs:
     name: Docs Checks
     needs: plan
-    if: ${{ needs.plan.outputs.docs == 'true' || needs.plan.outputs.code == 'true' }}
+    if: ${{ github.event_name == 'pull_request' && (needs.plan.outputs.docs == 'true' || needs.plan.outputs.code == 'true') }}
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     permissions:
       contents: read
     steps:
@@ -100,14 +109,15 @@ jobs:
   security:
     name: Security
     needs: plan
-    if: ${{ needs.plan.outputs.code == 'true' }}
+    if: ${{ (github.event_name == 'pull_request' && !startsWith(github.head_ref, 'release-please--')) || needs.plan.outputs.deps == 'true' || needs.plan.outputs.workflows == 'true' }}
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
+          fetch-depth: ${{ github.event_name != 'pull_request' && 1 || 0 }}
           persist-credentials: false
       - uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5.2.9
         with:
@@ -115,10 +125,19 @@ jobs:
           install_args: --locked
           cache_save: false
       - name: Scan workflows with zizmor
-        run: zizmor --offline --quiet .github/workflows
-      - name: Scan for leaked secrets
-        run: gitleaks git --no-banner --log-level warn --redact .
+        if: ${{ needs.plan.outputs.workflows == 'true' }}
+        run: hk check --all -q -n -p security
+      - name: Scan PR commits for leaked secrets
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          if git rev-parse --verify -q HEAD^2 >/dev/null; then
+            opts="HEAD^1..HEAD^2"
+          else
+            opts="-n 1"
+          fi
+          gitleaks git --no-banner --log-level warn --redact --log-opts="$opts" .
       - name: Audit dependencies
+        if: ${{ needs.plan.outputs.deps == 'true' }}
         run: mise run audit
 
   gate:
