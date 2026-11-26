@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.16](https://github.com/taitide-labs/kitcode/compare/v0.1.15...v0.1.16) (2026-11-26)
+
+
+### Bug Fixes
+
+* **release:** 显式安装交叉编译目标 rust-std ([#48](https://github.com/taitide-labs/kitcode/issues/48)) ([8739285](https://github.com/taitide-labs/kitcode/commit/8739285b312c59a00049333149ae23f302a5962a))
+
 ## [0.1.15](https://github.com/taitide-labs/kitcode/compare/v0.1.14...v0.1.15) (2026-11-26)
 
 
