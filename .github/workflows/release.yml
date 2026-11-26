@@ -51,9 +51,6 @@ jobs:
           - target: aarch64-apple-darwin
             runner: macos-latest
             ext: tar.gz
-          - target: x86_64-apple-darwin
-            runner: macos-latest
-            ext: tar.gz
           - target: x86_64-unknown-linux-gnu
             runner: ubuntu-24.04
             ext: tar.gz
@@ -231,7 +228,6 @@ jobs:
           const pkg = require("./package.json");
           const map = {
             "darwin-arm64": "aarch64-apple-darwin.tar.gz",
-            "darwin-x64": "x86_64-apple-darwin.tar.gz",
             "linux-x64": "x86_64-unknown-linux-gnu.tar.gz",
             "linux-arm64": "aarch64-unknown-linux-gnu.tar.gz",
             "win32-x64": "x86_64-pc-windows-msvc.zip"
@@ -299,7 +295,6 @@ jobs:
           formula_class=$(echo "$pkg_name" | awk -F'[-_]' '{for(i=1;i<=NF;i++) printf toupper(substr($i,1,1)) substr($i,2)}')
 
           sha_mac_arm=$(sha256sum "artifacts/${pkg_name}-aarch64-apple-darwin.tar.gz" | awk '{print $1}')
-          sha_mac_x64=$(sha256sum "artifacts/${pkg_name}-x86_64-apple-darwin.tar.gz" | awk '{print $1}')
           sha_lin_x64=$(sha256sum "artifacts/${pkg_name}-x86_64-unknown-linux-gnu.tar.gz" | awk '{print $1}')
           sha_lin_arm=$(sha256sum "artifacts/${pkg_name}-aarch64-unknown-linux-gnu.tar.gz" | awk '{print $1}')
 
@@ -315,10 +310,6 @@ jobs:
               on_arm do
                 url "https://github.com/${REPO}/releases/download/${TAG}/${pkg_name}-aarch64-apple-darwin.tar.gz"
                 sha256 "${sha_mac_arm}"
-              end
-              on_intel do
-                url "https://github.com/${REPO}/releases/download/${TAG}/${pkg_name}-x86_64-apple-darwin.tar.gz"
-                sha256 "${sha_mac_x64}"
               end
             end
 
