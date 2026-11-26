@@ -16,6 +16,7 @@ permissions: {}
 
 concurrency:
   group: release-main
+  queue: max
 
 jobs:
   release-please:
@@ -57,9 +58,8 @@ jobs:
             runner: ubuntu-24.04
             ext: tar.gz
           - target: aarch64-unknown-linux-gnu
-            runner: ubuntu-24.04
+            runner: ubuntu-24.04-arm
             ext: tar.gz
-            cross_linux_arm64: true
           - target: x86_64-pc-windows-msvc
             runner: windows-latest
             ext: zip
@@ -78,13 +78,7 @@ jobs:
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           key: ${{ matrix.target }}
-      - name: Install aarch64 Linux cross-linker
-        if: ${{ matrix.cross_linux_arm64 }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu
       - name: Run cross-platform tests
-        if: ${{ !matrix.cross_linux_arm64 }}
         shell: bash
         env:
           TARGET: ${{ matrix.target }}
@@ -93,7 +87,6 @@ jobs:
         shell: bash
         env:
           TARGET: ${{ matrix.target }}
-          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
         run: cargo build -p "$PKG_NAME" --release --locked --target "$TARGET"
       - name: Package artifact
         shell: bash

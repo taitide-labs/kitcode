@@ -7,10 +7,11 @@ on:
     types: [opened, synchronize, reopened]
   merge_group:
 
+cache-mode: read
 permissions: {}
 
 concurrency:
-  group: ci-${{ github.head_ref || github.ref }}
+  group: ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -139,6 +140,7 @@ jobs:
     needs: [plan, docs, checks, security]
     if: always()
     runs-on: ubuntu-24.04
+    timeout-minutes: 2
     steps:
       - name: Verify required checks
         env:
