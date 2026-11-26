@@ -2,8 +2,4 @@ textRules:
   spellcheck: 0
 
 ignore:
-  - "target/**"
-  - "Cargo.lock"
-  - "dist/**"
-  - ".rumdl_cache/**"
   - "CHANGELOG.md"

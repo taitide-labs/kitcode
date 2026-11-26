@@ -26,6 +26,7 @@ jobs:
       code: ${{ steps.filter.outputs.code == 'true' && !startsWith(github.head_ref, 'release-please--') }}
       deps: ${{ steps.filter.outputs.deps == 'true' && !startsWith(github.head_ref, 'release-please--') }}
       workflows: ${{ steps.filter.outputs.workflows == 'true' && !startsWith(github.head_ref, 'release-please--') }}
+      release_pr: ${{ startsWith(github.head_ref, 'release-please--') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -39,17 +40,11 @@ jobs:
             docs:
               - '**/*.md'
               - 'docs/**'
-              - '.config/rumdl.toml'
-              - '.config/autocorrectrc'
-              - '.config/lychee.toml'
             code:
               - '**'
               - '!**/*.md'
               - '!docs/**'
               - '!LICENSE'
-              - '!.config/rumdl.toml'
-              - '!.config/autocorrectrc'
-              - '!.config/lychee.toml'
             deps:
               - '**/Cargo.toml'
               - '**/Cargo.lock'
@@ -107,7 +102,7 @@ jobs:
   security:
     name: Security
     needs: plan
-    if: ${{ (github.event_name == 'pull_request' && !startsWith(github.head_ref, 'release-please--')) || needs.plan.outputs.deps == 'true' || needs.plan.outputs.workflows == 'true' }}
+    if: ${{ (github.event_name == 'pull_request' && needs.plan.outputs.release_pr != 'true') || needs.plan.outputs.deps == 'true' || needs.plan.outputs.workflows == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
