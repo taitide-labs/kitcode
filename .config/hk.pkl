@@ -5,6 +5,8 @@ profiles = List("docs", "code", "security")
 terminal_progress = false
 display_skip_reasons = List()
 
+local cargo_manifests = List("Cargo.toml", "**/Cargo.toml", "Cargo.lock", "rust-toolchain.toml")
+
 steps {
   ["autocorrect"] {
     profiles = List("docs")
@@ -61,13 +63,13 @@ steps {
 
   ["cargo_clippy"] {
     profiles = List("code", "!fmt")
-    glob = List("**/*.rs", "Cargo.toml", "Cargo.lock", "clippy.toml")
+    glob = cargo_manifests + List("**/*.rs", "clippy.toml")
     check = "cargo clippy -q --workspace --all-targets --locked -- -D warnings"
   }
 
   ["cargo_test"] {
     profiles = List("code", "!fmt")
-    glob = List("**/*.rs", "Cargo.toml", "Cargo.lock")
+    glob = cargo_manifests + List("**/*.rs")
     check = "cargo nextest run --workspace --locked --no-tests=pass --cargo-quiet --status-level=fail --final-status-level=fail --show-progress=none"
   }
 
@@ -89,7 +91,7 @@ hooks {
   ["pre-push"] {
     steps {
       ["cargo_deny"] {
-        glob = List("Cargo.toml", "Cargo.lock", "deny.toml", "**/Cargo.toml")
+        glob = cargo_manifests + List("deny.toml")
         check = "cargo deny --locked -L error check --hide-inclusion-graph"
       }
     }
