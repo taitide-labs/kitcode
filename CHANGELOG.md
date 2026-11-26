@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.15](https://github.com/taitide-labs/kitcode/compare/v0.1.14...v0.1.15) (2026-11-26)
+
+
+### Bug Fixes
+
+* **cli:** 拒绝多余命令行参数并使用 u8 返回退出码 ([#46](https://github.com/taitide-labs/kitcode/issues/46)) ([e2c1d75](https://github.com/taitide-labs/kitcode/commit/e2c1d75002fd538e170fceb98b88cbb3333214c8))
+
 ## [0.1.14](https://github.com/taitide-labs/kitcode/compare/v0.1.13...v0.1.14) (2026-11-14)
 
 
