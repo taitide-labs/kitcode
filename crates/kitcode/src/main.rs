@@ -11,24 +11,24 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
     clippy::print_stderr,
     reason = "CLI entrypoint writes user-facing output directly to stdout/stderr"
 )]
-fn run(args: &[String]) -> i32 {
-    match args.first().map(String::as_str) {
-        Some("-V" | "--version") => {
+fn run(args: &[String]) -> u8 {
+    match args {
+        [] => {
+            println!("KitCode Agent is an AI agent built in Rust.");
+            0
+        }
+        [arg] if matches!(arg.as_str(), "-V" | "--version") => {
             println!("kitcode {VERSION}");
             0
         }
-        Some("-h" | "--help") => {
+        [arg] if matches!(arg.as_str(), "-h" | "--help") => {
             println!(
                 "KitCode Agent {VERSION}\n\nUsage: kitcode [OPTIONS]\n\nOptions:\n  -h, --help     Print help\n  -V, --version  Print version"
             );
             0
         }
-        None => {
-            println!("KitCode Agent is an AI agent built in Rust.");
-            0
-        }
-        Some(other) => {
-            eprintln!("Unknown argument: {other}");
+        [arg, ..] => {
+            eprintln!("Unknown argument: {arg}");
             2
         }
     }
@@ -36,6 +36,5 @@ fn run(args: &[String]) -> i32 {
 
 fn main() -> ExitCode {
     let args: Vec<String> = env::args().skip(1).collect();
-    let code = run(&args);
-    ExitCode::from(code as u8)
+    ExitCode::from(run(&args))
 }
