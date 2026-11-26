@@ -9,9 +9,5 @@ readme = "../../README.md"
 keywords = ["ai", "agent", "cli", "coding"]
 categories = ["command-line-utilities", "development-tools"]
 
-[[bin]]
-name = "kitcode"
-path = "src/main.rs"
-
 [lints]
 workspace = true
