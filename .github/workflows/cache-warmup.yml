@@ -14,6 +14,7 @@ on:
       - 'clippy.toml'
       - 'rust-toolchain.toml'
       - '.cargo/config.toml'
+      - '.github/actions/cargo-cache/**'
       - '.github/workflows/ci.yml'
       - '.github/workflows/cache-warmup.yml'
   schedule:
@@ -50,12 +51,12 @@ jobs:
           install_args: --locked
       - name: Wait for Rust toolchain
         wait: rustup
-      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
-        id: rust-cache
+      - uses: $/.github/actions/cargo-cache
+        id: cargo-cache
         with:
-          shared-key: ci-checks
+          cache: ci-checks
       - name: Precompile dependencies and test binaries
-        if: ${{ github.event_name != 'schedule' || steps.rust-cache.outputs.cache-hit != 'true' }}
+        if: ${{ github.event_name != 'schedule' || steps.cargo-cache.outputs.cache-hit != 'true' }}
         run: |
           cargo clippy -q --workspace --all-targets --locked -- -D warnings
           cargo nextest run --workspace --locked --no-run --cargo-quiet

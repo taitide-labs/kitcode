@@ -56,6 +56,7 @@ jobs:
               - 'deny.toml'
             workflows:
               - '.github/workflows/**'
+              - '.github/actions/**'
 
   docs:
     name: Docs Checks
@@ -101,10 +102,10 @@ jobs:
           cache_save: false
       - name: Wait for Rust toolchain
         wait: rustup
-      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: $/.github/actions/cargo-cache
         with:
-          shared-key: ci-checks
-          save-if: false
+          cache: ci-checks
+          save: "false"
       - name: Run code checks
         run: hk check --all -q -n -p code
 
