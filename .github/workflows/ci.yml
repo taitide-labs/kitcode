@@ -46,6 +46,10 @@ jobs:
               - '!**/*.md'
               - '!docs/**'
               - '!LICENSE'
+              - '!.github/*.json'
+              - '!.github/.*.json'
+              - '!.github/ISSUE_TEMPLATE/**'
+              - '!.github/codeql/**'
             deps:
               - '**/Cargo.toml'
               - '**/Cargo.lock'
@@ -56,7 +60,7 @@ jobs:
   docs:
     name: Docs Checks
     needs: plan
-    if: ${{ github.event_name == 'pull_request' && (needs.plan.outputs.docs == 'true' || needs.plan.outputs.code == 'true') }}
+    if: ${{ github.event_name == 'pull_request' && needs.plan.outputs.release_pr != 'true' && (needs.plan.outputs.docs == 'true' || needs.plan.outputs.code == 'true') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
@@ -75,7 +79,7 @@ jobs:
   checks:
     name: Checks
     needs: plan
-    if: ${{ needs.plan.outputs.code == 'true' }}
+    if: ${{ github.event_name == 'merge_group' && needs.plan.outputs.code == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
