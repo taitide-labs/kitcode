@@ -16,5 +16,7 @@
 
 - 当需要引入新命令时，必须先接入 `mise` 或 `hk` 作为统一入口，仅当命令专属于本地或一次性使用时可独立执行；接入的命令应当保持静默执行，仅当发生异常时输出日志，以避免污染上下文。
 - 当本次修改需要提交代码时，避免提前手动执行 `mise` 检查命令，交由 Git Hook 自动执行。
-- 当提交 PR 后等待校验时，优先执行 `gh pr merge --auto --squash --delete-branch && (gh pr checks --watch -i 30 --fail-fast > /dev/null 2>&1 || gh pr checks)`，以抑制轮询日志刷屏。
+- 当提交 PR 后仅需完成入队时，执行 `gh pr merge --auto --delete-branch && (gh pr checks --watch -i 30 --fail-fast > /dev/null 2>&1 || gh pr checks)` 后结束本轮任务，以抑制日志刷屏并避免阻塞等待队列合入。
+- 当开启不依赖未合入 PR 的新任务时，应当直接基于 `origin/main` 切新分支开发。
+- 当新任务强依赖未合入的前置 PR 时，应当基于前置分支切新分支继续开发，仅在确认前置 PR 合入 `main` 后再执行 `git fetch -q origin main && git rebase --onto origin/main <前置分支>` 并推送。
 - 执行 `git push`、`git fetch`、`git pull` 时附加 `-q`，避免对象压缩进度条刷屏上下文。
