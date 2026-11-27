@@ -84,9 +84,9 @@ jobs:
         run: mise install --locked "github:nextest-rs/nextest"
       - name: Wait for Rust toolchain
         wait: rustup
-      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: $/.github/actions/cargo-cache
         with:
-          key: test-${{ matrix.target }}
+          cache: test-${{ matrix.target }}
       - name: Run cross-platform checks
         shell: bash
         env:
@@ -124,13 +124,21 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Rust toolchain
+        id: rustup
         shell: bash
+        background: true
         env:
           TARGET: ${{ matrix.target }}
         run: rustup install --profile minimal && rustup target add "$TARGET"
-      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: jdx/mise-action@90f833d396d0cc3674b631d2d225e306476c303a # v5.2.10
         with:
-          key: build-${{ matrix.target }}
+          install: false
+          cache_save: false
+      - name: Wait for Rust toolchain
+        wait: rustup
+      - uses: $/.github/actions/cargo-cache
+        with:
+          cache: build-${{ matrix.target }}
       - name: Build binary
         shell: bash
         env:

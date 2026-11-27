@@ -1,0 +1,87 @@
+name: Cargo Cache
+description: >
+  Installs the mise-locked huacnlee/cargo binary ahead of rustup's cargo on PATH
+  and restores/saves its shared dependency builds and Cargo registry indices.
+
+inputs:
+  cache:
+    description: Cache scope name, unique per job and target.
+    required: true
+  lockfiles:
+    description: Space-separated list of files hashed into the exact cache key.
+    required: false
+    default: Cargo.lock
+  save:
+    description: Whether to save the cache on miss ('true' or 'false').
+    required: false
+    default: "true"
+
+outputs:
+  cache-hit:
+    description: Whether an exact cache hit occurred.
+    value: ${{ steps.cache.outputs.cache-hit || steps.restore.outputs.cache-hit }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install huacnlee/cargo
+      shell: bash
+      run: |
+        set -euo pipefail
+        mise install --locked "github:huacnlee/cargo"
+        mise reshim
+
+    - name: Verify cargo and compute cache key
+      id: key
+      shell: bash
+      env:
+        CACHE_NAME: ${{ inputs.cache }}
+        LOCKFILES: ${{ inputs.lockfiles }}
+      run: |
+        set -euo pipefail
+        command -v cargo
+        version=$(cargo -V)
+        echo "$version"
+        case "$version" in
+          *huacnlee/cargo*) ;;
+          *) echo "::error::cargo is not huacnlee/cargo: $version"; exit 1 ;;
+        esac
+        hash_stdin() {
+          if command -v sha256sum >/dev/null 2>&1; then
+            sha256sum | awk '{print $1}'
+          else
+            shasum -a 256 | awk '{print $1}'
+          fi
+        }
+        rustc_hash=$(rustc -vV | hash_stdin)
+        read -ra lock_files <<< "$LOCKFILES"
+        lock_hash=$(cat "${lock_files[@]}" | hash_stdin)
+        prefix="cargo-v1-${RUNNER_OS}-${RUNNER_ARCH}-${CACHE_NAME}-${rustc_hash:0:12}-"
+        {
+          echo "prefix=${prefix}"
+          echo "key=${prefix}${lock_hash:0:16}"
+        } >> "$GITHUB_OUTPUT"
+
+    - name: Cache cargo dependencies
+      id: cache
+      if: ${{ inputs.save == 'true' }}
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: |
+          ~/.cargo/registry/index/
+          ~/.cargo/git/db/
+          ~/.cargo/targets/shared-deps/
+        key: ${{ steps.key.outputs.key }}
+        restore-keys: ${{ steps.key.outputs.prefix }}
+
+    - name: Restore cargo dependencies
+      id: restore
+      if: ${{ inputs.save != 'true' }}
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: |
+          ~/.cargo/registry/index/
+          ~/.cargo/git/db/
+          ~/.cargo/targets/shared-deps/
+        key: ${{ steps.key.outputs.key }}
+        restore-keys: ${{ steps.key.outputs.prefix }}

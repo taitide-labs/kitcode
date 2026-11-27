@@ -17,6 +17,7 @@ steps {
 
   ["rumdl"] {
     profiles = List("docs")
+    depends = "autocorrect"
     glob = List("**/*.md")
     check = "rumdl check --config .config/rumdl.toml {{files}}"
     fix = "rumdl check --config .config/rumdl.toml --fix {{files}}"
@@ -24,24 +25,27 @@ steps {
 
   ["mmdr"] {
     profiles = List("docs", "!fmt")
+    depends = "rumdl"
     glob = List("**/*.md")
     check = "rc=0; for f in {{files}}; do if grep -q '```mermaid' \"$f\"; then mmdr -i \"$f\" --size --fastText >/dev/null || rc=1; fi; done; exit \"$rc\""
   }
 
   ["lychee"] {
     profiles = List("docs", "!fmt")
+    depends = "rumdl"
     glob = List("**/*.md")
     check = "lychee --config .config/lychee.toml --offline {{files}}"
   }
 
   ["typos"] = (Builtins.typos) {
     profiles = List("docs", "!fmt")
+    depends = "rumdl"
     exclude = List("CHANGELOG.md")
   }
 
   ["zizmor"] {
     profiles = List("security", "!fmt")
-    glob = List(".github/workflows/*.yml", ".github/workflows/*.yaml")
+    glob = List(".github/workflows/*.yml", ".github/workflows/*.yaml", ".github/actions/**/*.yml", ".github/actions/**/*.yaml")
     check = "zizmor --offline --quiet {{files}}"
   }
 
@@ -57,6 +61,7 @@ steps {
 
   ["ast_grep"] {
     profiles = List("code", "!fmt")
+    depends = "cargo_fmt"
     glob = List("**/*.rs")
     check = "ast-grep scan {{files}}"
   }
@@ -69,6 +74,7 @@ steps {
 
   ["cargo_clippy"] {
     profiles = List("code", "!fmt")
+    depends = "cargo_fmt"
     glob = cargo_manifests + List("**/*.rs", "clippy.toml")
     check = "cargo clippy -q --workspace --all-targets --locked -- -D warnings"
   }
